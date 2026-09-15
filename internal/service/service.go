@@ -918,21 +918,16 @@ func (s *Service) applyChanges(ctx context.Context, configChanged, usersChanged 
 		return
 	}
 
-	// If config changed, delegate to kernel.Reload. The kernel implementation
-	// decides whether to hot-swap users, reconstruct inbounds, or restart itself.
-	if configChanged && s.kernel.IsRunning() {
-		if err := s.kernel.Reload(s.lastConfig, s.lastUsers, s.cert.TLSCert()); err != nil {
-			nlog.Core().Warn(fmt.Sprintf("reload failed, restarting: %v", err))
-			s.startKernel(s.lastConfig, s.lastUsers)
-		} else {
-			s.appliedState.Config = s.lastConfig
-			s.appliedState.Users = s.lastUsers
-			if s.nodeLog != nil {
-				s.nodeLog.Info(fmt.Sprintf("config updated, %d users", len(s.lastUsers)))
-			}
-		}
-	} else if !s.kernel.IsRunning() {
-		s.startKernel(s.lastConfig, s.lastUsers)
+	// Config changes require a full kernel restart instead of a hot Reload.
+	//
+	// sing-box's Reload() reconstructs inbounds with a NOP logger, which
+	// silently drops the per-connection "[uuid] inbound connection to" audit
+	// log lines that downstream SOC agents depend on to attribute traffic to
+	// users. Stop the old instance first so the new one can rebind the same
+	// ports, then start fresh with the real logger.
+	s.kernel.Stop()
+	if !s.startKernel(s.lastConfig, s.lastUsers) {
+		nlog.Core().Error("failed to restart kernel after config change")
 	}
 }
 
