@@ -147,6 +147,13 @@ func mergeRouteList(a, b []map[string]any) []map[string]any {
 func buildRoutes(panelRoutes []model.RouteRule, customRules []model.CustomRouteRule, custom []map[string]any) M {
 	var rules []M
 
+	// Sniff and override the connection destination first (route-action sniff,
+	// sing-box 1.11+). For VLESS/VMess/Trojan traffic whose target arrives as a
+	// resolved IP, this restores the real hostname from the inner TLS SNI / HTTP
+	// Host / QUIC, so domain-based rules match AND the connection log records
+	// "inbound connection to <domain>" instead of a bare IP.
+	rules = append(rules, M{"action": "sniff"})
+
 	// Structured custom routes now take the highest priority for panel-managed overrides.
 	for _, rule := range customRules {
 		if rule.Disabled {
