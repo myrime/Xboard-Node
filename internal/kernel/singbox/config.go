@@ -152,7 +152,7 @@ func buildRoutes(panelRoutes []model.RouteRule, customRules []model.CustomRouteR
 	// resolved IP, this restores the real hostname from the inner TLS SNI / HTTP
 	// Host / QUIC, so domain-based rules match AND the connection log records
 	// "inbound connection to <domain>" instead of a bare IP.
-	rules = append(rules, M{"action": "sniff"})
+	rules = append(rules, M{"action": "sniff", "override_destination": true})
 
 	// Structured custom routes now take the highest priority for panel-managed overrides.
 	for _, rule := range customRules {
