@@ -526,6 +526,45 @@ func TestBuildConfig(t *testing.T) {
 	assertMapValue(t, inbounds[0], "type", "shadowsocks")
 }
 
+// --- buildConfig: socks shared-port UDP relay ---
+
+func TestBuildConfig_SocksUDPSharedDefault(t *testing.T) {
+	// Field unset: udp_shared is injected by default for socks inbounds
+	kcfg := config.KernelConfig{LogLevel: "info"}
+	nc := &panel.NodeConfig{Protocol: "socks", ServerPort: 1080}
+	cfg := buildConfig(kcfg, testNodeSpec(nc), testUsers, kernel.TLSCert{})
+	inbounds := cfg["inbounds"].([]M)
+	assertMapValue(t, inbounds[0], "type", "socks")
+	assertMapValue(t, inbounds[0], "udp_shared", true)
+
+	// Non-socks inbounds are unaffected by the default
+	nc2 := &panel.NodeConfig{Protocol: "shadowsocks", ServerPort: 111, Cipher: "aes-128-gcm"}
+	cfg2 := buildConfig(kcfg, testNodeSpec(nc2), testUsers, kernel.TLSCert{})
+	in2 := cfg2["inbounds"].([]M)
+	if _, ok := in2[0]["udp_shared"]; ok {
+		t.Error("udp_shared must not be set on non-socks inbound")
+	}
+}
+
+func TestBuildConfig_SocksUDPSharedOptOut(t *testing.T) {
+	nc := &panel.NodeConfig{Protocol: "socks", ServerPort: 1080}
+
+	// Explicit false opts out of the shared-port relay
+	disabled := false
+	kcfg := config.KernelConfig{LogLevel: "info", SocksUDPShared: &disabled}
+	cfg := buildConfig(kcfg, testNodeSpec(nc), testUsers, kernel.TLSCert{})
+	in := cfg["inbounds"].([]M)
+	if _, ok := in[0]["udp_shared"]; ok {
+		t.Error("udp_shared must not be set when socks_udp_shared is false")
+	}
+
+	// Explicit true still enables it
+	enabled := true
+	kcfg.SocksUDPShared = &enabled
+	cfg2 := buildConfig(kcfg, testNodeSpec(nc), testUsers, kernel.TLSCert{})
+	assertMapValue(t, cfg2["inbounds"].([]M)[0], "udp_shared", true)
+}
+
 func TestBuildConfig_OutboundPriority(t *testing.T) {
 	kcfg := config.KernelConfig{
 		LogLevel: "info",

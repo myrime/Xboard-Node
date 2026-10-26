@@ -148,7 +148,17 @@ type KernelConfig struct {
 	// runs over the same listen port as TCP instead of random ephemeral
 	// ports, so only the node port itself needs UDP reachability.
 	// UDP user attribution is by source IP of the TCP associate.
-	SocksUDPShared bool `yaml:"socks_udp_shared"`
+	// Default: ENABLED (field omitted). Set explicitly to false to restore
+	// the legacy per-associate ephemeral UDP ports.
+	// Only affects socks inbounds; other protocols ignore this setting.
+	SocksUDPShared *bool `yaml:"socks_udp_shared,omitempty"`
+}
+
+// SocksUDPSharedEnabled reports whether socks inbounds should use the
+// shared-port UDP relay. A nil (unset) field means enabled by default;
+// an explicit false opts out to the legacy behavior.
+func (k KernelConfig) SocksUDPSharedEnabled() bool {
+	return k.SocksUDPShared == nil || *k.SocksUDPShared
 }
 
 type CertConfig struct {

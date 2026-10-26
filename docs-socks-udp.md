@@ -12,12 +12,15 @@ Xray 的 socks 实现没有这个问题：它用**一个共享 UDP socket 绑定
 
 ## 启用
 
-`config.yml`（全局，对该实例所有 socks 节点生效）：
+**默认已启用（`v1.0.0-udp.2` 起）**——升级或新装节点无需任何配置改动。
+只作用于 socks 入站，其他协议（vless/trojan/shadowsocks 等）不受影响。
+
+如需回退旧的随机端口行为，`config.yml` 显式设为 `false`：
 
 ```yaml
 kernel:
   type: "singbox"
-  socks_udp_shared: true
+  socks_udp_shared: false   # 仅 socks 节点需要；省略该行 = 默认开启
 ```
 
 生成的 sing-box 入站配置等效于：
@@ -47,7 +50,7 @@ kernel:
 
 ## 与默认（独占 socket）模式的差异
 
-| 项目 | 默认模式 | udp_shared |
+| 项目 | 旧行为（socks_udp_shared: false） | udp_shared（默认） |
 |------|----------|-----------|
 | UDP 监听端口 | 每客户端随机高位端口 | 节点端口（与 TCP 相同） |
 | 防火墙要求 | 放行随机端口段 | 只放行节点端口 |
@@ -61,7 +64,7 @@ kernel:
 
 ```bash
 xbctl service stop
-# 编辑 config.yml 去掉 socks_udp_shared（或设为 false）
+# 编辑 config.yml 将 socks_udp_shared 设为 false（或补上这一行）
 xbctl service start
 ```
 
