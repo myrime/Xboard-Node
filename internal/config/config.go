@@ -142,6 +142,13 @@ type KernelConfig struct {
 	// customization of dns, outbounds, endpoints, route, experimental, etc.
 	// Compatible with V2bX OriginalPath format.
 	CustomConfig string `yaml:"custom_config"`
+
+	// SocksUDPShared enables the shared-socket UDP relay for socks inbounds
+	// (requires myrime/sing-box >= v1.14.0-alpha.2-xboard.2): socks5 UDP
+	// runs over the same listen port as TCP instead of random ephemeral
+	// ports, so only the node port itself needs UDP reachability.
+	// UDP user attribution is by source IP of the TCP associate.
+	SocksUDPShared bool `yaml:"socks_udp_shared"`
 }
 
 type CertConfig struct {

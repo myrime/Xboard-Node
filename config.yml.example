@@ -10,6 +10,11 @@
 # ── Multiple instances ──
 # kernel:
 #   type: "singbox"
+#   # socks_udp_shared: true    # socks nodes only: relay socks5 UDP over the
+#                               # node's own listen port (like Xray) instead of
+#                               # random ephemeral ports, so only the node port
+#                               # needs UDP reachability. UDP user attribution
+#                               # is by source IP of the TCP associate.
 # log:
 #   level: "info"
 # instances:

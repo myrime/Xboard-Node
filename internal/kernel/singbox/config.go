@@ -55,6 +55,13 @@ func buildConfig(kcfg config.KernelConfig, nc *model.NodeSpec, users []model.Use
 
 	inbound := buildInbound(nc, users, tc)
 	if inbound != nil {
+		// Socks same-port UDP relay (myrime/sing-box udp_shared):
+		// relay socks5 UDP over the node's own listen port instead of
+		// random ephemeral ports, so only the node port needs UDP
+		// reachability.
+		if nc.Protocol == "socks" && kcfg.SocksUDPShared {
+			inbound["udp_shared"] = true
+		}
 		cfg["inbounds"] = []M{inbound}
 	}
 
